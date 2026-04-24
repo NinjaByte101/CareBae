@@ -9,22 +9,20 @@ from firebase_admin import credentials, auth, firestore
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
 
-# ---- PDF processing ----
+# PDF processing 
 from pathlib import Path
 from PyPDF2 import PdfReader
 import PyPDF2
 
-# ---- Embeddings & Vector DB ----
+# Embeddings & Vector DB
 from sentence_transformers import SentenceTransformer
 import pinecone
 import numpy as np
 
-# ---- Groq LLM ----
+# Groq LLM
 from groq import Groq
 
-# -----------------------------
 # Configuration from secrets
-# -----------------------------
 # Get all secrets
 FIREBASE_CREDENTIALS_JSON = json.loads(st.secrets["FIREBASE_CREDENTIALS_JSON"])
 PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
@@ -34,18 +32,15 @@ GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 PDF_PATH = st.secrets.get("PDF_PATH", "data/pdfs")
 MODEL_NAME = st.secrets.get("MODEL_NAME", "llama-3.1-8b-instant")
 
-# -----------------------------
 # Initialize Firebase
-# -----------------------------
+
 if not firebase_admin._apps:
     cred = credentials.Certificate(FIREBASE_CREDENTIALS_JSON)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-# -----------------------------
 # Initialize Pinecone (v3+ syntax)
-# -----------------------------
 @st.cache_resource
 def init_pinecone():
     """Initialize Pinecone client with v3+ syntax"""
@@ -81,9 +76,7 @@ def init_pinecone():
 
 pc, index = init_pinecone()
 
-# -----------------------------
 # Initialize Embedding Model
-# -----------------------------
 @st.cache_resource
 def load_embedding_model():
     """Load sentence transformer model for embeddings"""
@@ -97,9 +90,7 @@ def load_embedding_model():
 
 embedding_model = load_embedding_model()
 
-# -----------------------------
 # Embedding Functions
-# -----------------------------
 def get_embedding(text: str) -> List[float]:
     """Generate embedding for text using sentence transformer or fallback"""
     if embedding_model:
@@ -119,9 +110,7 @@ def simple_embed_fallback(text: str) -> List[float]:
     norm = np.linalg.norm(vec)
     return [v / norm for v in vec] if norm > 0 else vec
 
-# -----------------------------
 # PDF Processing Functions
-# -----------------------------
 def extract_text_from_pdf(pdf_path: Path) -> str:
     """Extract text from PDF file"""
     try:
@@ -195,9 +184,7 @@ def process_pdf_file(pdf_path: Path, uploaded_by: str = "admin") -> List[Dict]:
     
     return processed_chunks
 
-# -----------------------------
 # Pinecone Operations (v3+ syntax)
-# -----------------------------
 def store_chunks_in_pinecone(chunks: List[Dict], namespace: str = "pdf_docs"):
     """Store chunks in Pinecone vector database"""
     if index is None:
@@ -374,9 +361,7 @@ def store_user_conversation(user_id: str, question: str, answer: str):
     except Exception as e:
         st.error(f"Error storing user conversation: {e}")
 
-# -----------------------------
 # PDF Upload and Processing
-# -----------------------------
 def process_uploaded_pdfs(pdf_dir: str = None, uploaded_files: List = None, user_id: str = "admin"):
     """Process and store PDFs in vector database"""
     total_chunks = 0
@@ -446,9 +431,7 @@ def get_uploaded_pdfs_stats():
         st.error(f"Error getting stats: {e}")
         return {"recent_uploads": [], "total_vectors": 0}
 
-# -----------------------------
 # Admin Functions
-# -----------------------------
 def display_admin_panel(user_id: str):
     """Display the admin panel for PDF management"""
     st.header("📁 Admin Panel - PDF Management")
@@ -673,9 +656,7 @@ def display_admin_panel(user_id: str):
                 # Note: In production, you might want to implement proper deletion
                 st.info("Data clearance would be implemented here")
 
-# -----------------------------
 # Groq LLM Integration
-# -----------------------------
 def call_groq_with_context(system_prompt: str, user_prompt: str, context: str = "") -> str:
     """Call Groq LLM with provided context"""
     try:
@@ -706,9 +687,7 @@ def call_groq_with_context(system_prompt: str, user_prompt: str, context: str = 
         st.error(f"Error calling Groq API: {e}")
         return "I apologize, but I'm having trouble generating a response right now. Please try again."
 
-# -----------------------------
 # Main Application
-# -----------------------------
 def main():
     st.set_page_config(
         page_title="CareBae - Women's Health Assistant",
@@ -926,9 +905,7 @@ Based on the above information and your general knowledge, provide a helpful res
                         "timestamp": firestore.SERVER_TIMESTAMP
                     })
 
-# -----------------------------
 # Make Admin Users
-# -----------------------------
 def make_user_admin(email: str):
     """Make a user an admin (run this once to set up admin users)"""
     try:
@@ -942,5 +919,5 @@ if __name__ == "__main__":
     main()
     
     
-# make_user_admin("2305101270036@paruluniversity.ac.in")
-make_user_admin("2305101010269@paruluniversity.ac.in")
+# make_user_admin("add yours email")
+make_user_admin("add yours email")
